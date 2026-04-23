@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한글샘 — 2학년 국어 학습 진단 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-faint: #8a8478;
+  --paper: #f7f3ec;
+  --paper-warm: #efe8db;
+  --paper-deep: #e8dfc9;
+  --line: #d4cab7;
+  --line-soft: #e5dcc7;
+  --accent: #c8553d;
+  --accent-soft: #e08775;
+  --green: #5a7a4a;
+  --gold: #b8924a;
+  --blue: #4a6b8a;
+  --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 4px 16px rgba(60,40,20,0.06);
+  --shadow-lg: 0 4px 24px rgba(60,40,20,0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(200,85,61,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(74,107,138,0.04) 0%, transparent 40%);
+}
+
+.container { max-width: 1320px; margin: 0 auto; padding: 32px 24px; }
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 32px;
+  position: relative;
+}
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -6px; left: 0; right: 0;
+  height: 1px; background: var(--ink);
+}
+
+.brand { display: flex; align-items: baseline; gap: 16px; }
+.brand-logo {
+  font-family: 'Nanum Myeongjo', serif;
+  font-weight: 800; font-size: 42px;
+  letter-spacing: -2px; color: var(--ink);
+}
+.brand-logo .accent { color: var(--accent); }
+.brand-tagline {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 14px; color: var(--ink-soft);
+}
+.header-meta { text-align: right; font-size: 12px; color: var(--ink-soft); letter-spacing: 1px; text-transform: uppercase; }
+.header-meta .date {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 16px; color: var(--ink);
+  text-transform: none; letter-spacing: 0; margin-top: 4px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 0; margin-bottom: 32px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.tab {
+  padding: 14px 22px; background: transparent; border: none;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 15px; font-weight: 500; color: var(--ink-soft);
+  cursor: pointer; position: relative;
+  transition: color 0.2s;
+  display: flex; align-items: center; gap: 8px;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--ink); font-weight: 600; }
+.tab.active::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 3px; background: var(--accent);
+}
+.tab-num {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 13px; color: var(--accent); font-weight: 700;
+}
+
+/* Panels */
+.panel { display: none; animation: fadeIn 0.3s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards */
+.card {
+  background: white; border: 1px solid var(--line);
+  border-radius: 4px; padding: 28px;
+  margin-bottom: 24px; box-shadow: var(--shadow);
+}
+.card-title {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 6px; color: var(--ink);
+}
+.card-subtitle { font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; }
+.section-label {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 12px; letter-spacing: 2px;
+  color: var(--accent); text-transform: uppercase;
+  margin-bottom: 8px; display: block; font-weight: 700;
+}
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* Form */
+label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--ink-soft); margin-bottom: 6px;
+}
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--line); background: var(--paper);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 14px; color: var(--ink);
+  border-radius: 3px; transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--accent); background: white;
+}
+textarea { resize: vertical; min-height: 100px; font-family: 'Gowun Dodum', sans-serif; line-height: 1.8; }
+
+button {
+  padding: 10px 20px; background: var(--ink); color: var(--paper);
+  border: none; font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  border-radius: 3px; transition: all 0.2s;
+}
+button:hover { background: var(--accent); transform: translateY(-1px); }
+button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+button.secondary:hover { background: var(--ink); color: var(--paper); }
+button.small { padding: 6px 12px; font-size: 13px; }
+button.danger { background: var(--accent); }
+button.green { background: var(--green); }
+
+.form-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-end; }
+.form-row > * { flex: 1; }
+.form-row button { flex: 0 0 auto; }
+.form-group { margin-bottom: 16px; }
+
+/* Stats */
+.stat {
+  background: white; border: 1px solid var(--line);
+  padding: 20px; border-radius: 4px;
+  position: relative; overflow: hidden;
+}
+.stat::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%; background: var(--accent);
+}
+.stat.green::before { background: var(--green); }
+.stat.gold::before { background: var(--gold); }
+.stat.blue::before { background: var(--blue); }
+
+.stat-label {
+  font-size: 12px; color: var(--ink-soft);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 36px; font-weight: 800;
+  color: var(--ink); line-height: 1;
+}
+.stat-unit { font-size: 16px; color: var(--ink-soft); margin-left: 4px; font-weight: 400; font-family: 'IBM Plex Sans KR', sans-serif;}
+.stat-sub { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  text-align: left; padding: 12px 10px;
+  border-bottom: 2px solid var(--ink);
+  font-weight: 600; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--ink-soft);
+}
+td { padding: 12px 10px; border-bottom: 1px solid var(--line-soft); }
+tr:hover td { background: var(--paper); }
+
+.tag {
+  display: inline-block; padding: 3px 10px;
+  background: var(--paper-warm); color: var(--ink);
+  border-radius: 12px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--line);
+}
+.tag.green { background: #e8f0e0; color: var(--green); border-color: #c5d4b8; }
+.tag.red { background: #f5e0db; color: var(--accent); border-color: #e0bcb2; }
+.tag.gold { background: #f3e9d2; color: var(--gold); border-color: #d8c79a; }
+.tag.blue { background: #dde6f0; color: var(--blue); border-color: #b8c7da; }
+
+/* Upload area */
+.upload-area {
+  border: 2px dashed var(--line);
+  border-radius: 6px;
+  padding: 40px 20px;
+  text-align: center;
+  background: var(--paper);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.upload-area:hover { border-color: var(--accent); background: white; }
+.upload-area.has-image { padding: 16px; }
+.upload-icon {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 48px; color: var(--accent); margin-bottom: 8px;
+  font-weight: 800;
+}
+.upload-text { font-size: 14px; color: var(--ink-soft); margin-bottom: 4px; }
+.upload-hint { font-size: 12px; color: var(--ink-faint); }
+.upload-area input[type="file"] { display: none; }
+.upload-preview {
+  max-width: 100%; max-height: 300px;
+  border-radius: 4px; box-shadow: var(--shadow);
+}
+
+/* AI result box */
+.ai-box {
+  background: linear-gradient(135deg, #fff8f0 0%, #fdf3e3 100%);
+  border: 1px solid var(--gold);
+  border-left: 4px solid var(--gold);
+  border-radius: 4px;
+  padding: 18px 20px;
+  margin: 16px 0;
+}
+.ai-box-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 14px; font-weight: 700;
+  color: var(--gold); margin-bottom: 10px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.ai-box-content {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 14px; line-height: 1.8; color: var(--ink);
+}
+
+/* Word entry */
+.word-entry {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr auto auto;
+  gap: 10px; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line-soft);
+}
+.word-num {
+  font-family: 'Nanum Myeongjo', serif;
+  font-weight: 700; color: var(--accent);
+  font-size: 16px; text-align: center;
+}
+.word-correct {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 16px; font-weight: 500;
+}
+.word-student input { font-family: 'Gowun Dodum', sans-serif; font-size: 16px; }
+
+/* Hangul ladder */
+.ladder {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ladder-step {
+  display: grid;
+  grid-template-columns: 40px 1fr 100px;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--paper);
+  border-left: 3px solid var(--line);
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s;
+}
+.ladder-step.active {
+  background: white;
+  border-left-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.ladder-step .step-num {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 22px; font-weight: 800;
+  color: var(--accent);
+}
+.ladder-step .step-name {
+  font-weight: 500;
+}
+.ladder-step .step-example {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 12px;
+  color: var(--ink-soft);
+  display: block; margin-top: 2px;
+}
+.ladder-step .step-progress {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 14px; font-weight: 700;
+  text-align: right;
+  color: var(--green);
+}
+
+/* Student list */
+.student-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 16px; align-items: center;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+.student-row:hover { border-color: var(--accent); transform: translateX(2px); }
+.student-name { font-weight: 600; font-size: 15px; }
+.student-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+
+/* Charts */
+.chart-container { position: relative; height: 280px; margin-top: 16px; }
+
+/* Empty state */
+.empty {
+  text-align: center; padding: 60px 20px;
+  color: var(--ink-soft);
+}
+.empty-icon {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 56px; color: var(--line);
+  margin-bottom: 16px; font-weight: 800;
+}
+.empty-text { font-size: 14px; margin-bottom: 4px; }
+
+/* Notice */
+.notice {
+  background: #fdf6e8;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--ink);
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.notice-icon {
+  font-family: 'Nanum Myeongjo', serif;
+  font-weight: 800;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+/* Toggle */
+.toggle-group {
+  display: inline-flex;
+  background: var(--paper-warm);
+  border-radius: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+}
+.toggle-group button {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--ink-soft);
+  border: none;
+  border-radius: 3px;
+  font-size: 13px;
+}
+.toggle-group button.active {
+  background: white;
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.toggle-group button:hover { background: rgba(255,255,255,0.5); }
+
+/* Sheet status */
+.sheet-status {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  background: var(--paper-warm);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.sheet-dot {
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Footer */
+.footer {
+  margin-top: 60px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-family: 'Nanum Myeongjo', serif;
+}
+.footer-quote {
+  font-style: italic; font-size: 14px;
+  color: var(--ink-soft); margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<header class="header">
+  <div class="brand">
+    <div class="brand-logo">한글<span class="accent">샘</span></div>
+    <div class="brand-tagline">2학년 국어 학습 진단·첨삭 시스템 v0.1</div>
+  </div>
+  <div class="header-meta">
+    <div>2026 디지털 연구대회 출품작</div>
+    <div class="date" id="todayDate"></div>
+    <div style="margin-top: 8px;">
+      <span class="sheet-status"><span class="sheet-dot"></span>구글 시트 연동 대기중</span>
+    </div>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-panel="dashboard"><span class="tab-num">01</span>대시보드</button>
+  <button class="tab" data-panel="students"><span class="tab-num">02</span>학생 관리</button>
+  <button class="tab" data-panel="dictation"><span class="tab-num">03</span>받아쓰기</button>
+  <button class="tab" data-panel="writing"><span class="tab-num">04</span>독서록·일기</button>
+  <button class="tab" data-panel="ladder"><span class="tab-num">05</span>국어 위계</button>
+  <button class="tab" data-panel="settings"><span class="tab-num">06</span>설정</button>
+</div>
+
+<!-- ===== 01. 대시보드 ===== -->
+<section class="panel active" id="dashboard">
+  <div class="grid-4" style="margin-bottom: 24px;">
+    <div class="stat">
+      <div class="stat-label">등록 학생</div>
+      <div class="stat-value" id="dashStudentCount">0<span class="stat-unit">명</span></div>
+      <div class="stat-sub">2학년 1반 기준</div>
+    </div>
+    <div class="stat green">
+      <div class="stat-label">받아쓰기 평균</div>
+      <div class="stat-value" id="dashDictationAvg">—<span class="stat-unit">점</span></div>
+      <div class="stat-sub">최근 5회 평균</div>
+    </div>
+    <div class="stat gold">
+      <div class="stat-label">제출된 글쓰기</div>
+      <div class="stat-value" id="dashWritingCount">0<span class="stat-unit">편</span></div>
+      <div class="stat-sub">독서록 + 일기</div>
+    </div>
+    <div class="stat blue">
+      <div class="stat-label">AI 첨삭 횟수</div>
+      <div class="stat-value" id="dashAICount">0<span class="stat-unit">회</span></div>
+      <div class="stat-sub">누적 처리량</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="section-label">학급 동향</span>
+      <div class="card-title">받아쓰기 정답률 추이</div>
+      <div class="card-subtitle">주차별 학급 평균 정답률</div>
+      <div class="chart-container"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <span class="section-label">취약 유형 분석</span>
+      <div class="card-title">맞춤법 오류 유형 분포</div>
+      <div class="card-subtitle">학급 전체 오답을 유형별로 자동 분류</div>
+      <div class="chart-container"><canvas id="errorChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">학생별 진단</span>
+    <div class="card-title">학생별 학습 단계 현황</div>
+    <div class="card-subtitle">2022 개정 교육과정 한글 위계 기준 — 1단계(낱자) → 4단계(문법)</div>
+    <div id="studentSummary" style="margin-top: 16px;">
+      <div class="empty">
+        <div class="empty-icon">學</div>
+        <div class="empty-text">아직 등록된 학생이 없습니다.</div>
+        <div class="upload-hint">[학생 관리] 탭에서 학생을 먼저 추가하세요.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 02. 학생 관리 ===== -->
+<section class="panel" id="students">
+  <div class="card">
+    <span class="section-label">학생 등록</span>
+    <div class="card-title">우리 반 명렬 만들기</div>
+    <div class="card-subtitle">학년·반·번호와 이름을 입력하세요. 등록된 학생은 모든 평가에서 자동으로 선택할 수 있습니다.</div>
+
+    <div class="form-row">
+      <div>
+        <label>학년</label>
+        <select id="newGrade">
+          <option value="1">1학년</option>
+          <option value="2" selected>2학년</option>
+          <option value="3">3학년</option>
+        </select>
+      </div>
+      <div>
+        <label>반</label>
+        <input type="number" id="newClass" value="1" min="1">
+      </div>
+      <div>
+        <label>번호</label>
+        <input type="number" id="newNumber" min="1" placeholder="예: 7">
+      </div>
+      <div style="flex: 2;">
+        <label>이름</label>
+        <input type="text" id="newName" placeholder="예: 김민수">
+      </div>
+      <button onclick="addStudent()">학생 추가</button>
+    </div>
+
+    <div class="notice">
+      <span class="notice-icon">i</span>
+      <div>여러 명을 한 번에 등록하려면 [설정] 탭에서 CSV 일괄 업로드를 사용하세요. 구글 시트와 연동하면 학교 기존 명렬을 그대로 가져올 수 있습니다.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">우리 반 학생</span>
+    <div class="card-title">등록된 학생 목록</div>
+    <div id="studentList" style="margin-top: 16px;"></div>
+  </div>
+</section>
+
+<!-- ===== 03. 받아쓰기 ===== -->
+<section class="panel" id="dictation">
+  <div class="card">
+    <span class="section-label">새 받아쓰기 평가</span>
+    <div class="card-title">받아쓰기 결과 입력</div>
+    <div class="card-subtitle">손글씨 사진을 업로드하면 AI가 글자를 읽어 자동 채점합니다. 교사가 직접 수정할 수도 있습니다.</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="form-group">
+          <label>학생 선택</label>
+          <select id="dictStudent"><option value="">— 학생을 선택하세요 —</option></select>
+        </div>
+        <div class="form-group">
+          <label>회차 (몇 회 받아쓰기인지)</label>
+          <input type="number" id="dictRound" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>시행일</label>
+          <input type="text" id="dictDate" placeholder="자동입력됨">
+        </div>
+        <div class="form-group">
+          <label>정답 단어 목록 (쉼표로 구분)</label>
+          <textarea id="dictAnswers" placeholder="예: 학교, 꽃이, 같이, 책을, 국물"></textarea>
+        </div>
+      </div>
+
+      <div>
+        <label>학생 답안 사진 업로드</label>
+        <div class="upload-area" onclick="document.getElementById('dictPhoto').click()">
+          <input type="file" id="dictPhoto" accept="image/*" onchange="handlePhotoUpload(event, 'dict')">
+          <div id="dictUploadDisplay">
+            <div class="upload-icon">+</div>
+            <div class="upload-text">사진을 선택하거나 끌어다 놓으세요</div>
+            <div class="upload-hint">JPG, PNG · 최대 10MB</div>
+          </div>
+        </div>
+
+        <div class="ai-box" id="dictAIBox" style="display:none;">
+          <div class="ai-box-title">▲ AI 손글씨 인식 결과</div>
+          <div class="ai-box-content" id="dictAIResult"></div>
+          <div style="margin-top: 12px;">
+            <button class="small green" onclick="acceptAIDictation()">인식 결과 사용</button>
+            <button class="small secondary" onclick="reAnalyze('dict')">다시 분석</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <button onclick="generateDictRows()">단어별 입력칸 만들기</button>
+      <button class="secondary" onclick="simulateAIDict()" style="margin-left:8px;">AI 자동 인식 실행 (데모)</button>
+    </div>
+
+    <div id="dictWordsArea" style="margin-top: 20px;"></div>
+
+    <div id="dictSubmitArea" style="display:none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line);">
+      <div class="grid-3" style="margin-bottom: 16px;">
+        <div class="stat">
+          <div class="stat-label">정답 / 전체</div>
+          <div class="stat-value" id="dictScore">—</div>
+        </div>
+        <div class="stat green">
+          <div class="stat-label">정답률</div>
+          <div class="stat-value" id="dictRate">—<span class="stat-unit">%</span></div>
+        </div>
+        <div class="stat gold">
+          <div class="stat-label">주요 오류 유형</div>
+          <div class="stat-value" id="dictMainError" style="font-size:18px; line-height:1.3;">—</div>
+        </div>
+      </div>
+      <button onclick="saveDictation()">결과 저장 및 구글 시트 전송</button>
+      <button class="secondary" onclick="resetDictation()" style="margin-left:8px;">처음부터 다시</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">최근 평가 기록</span>
+    <div class="card-title">받아쓰기 결과 누적</div>
+    <table id="dictHistoryTable">
+      <thead>
+        <tr><th>날짜</th><th>학생</th><th>회차</th><th>점수</th><th>정답률</th><th>주요 오류</th><th>관리</th></tr>
+      </thead>
+      <tbody id="dictHistory"></tbody>
+    </table>
+    <div id="dictEmptyMsg" class="empty">
+      <div class="empty-icon">字</div>
+      <div class="empty-text">아직 평가 기록이 없습니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 04. 독서록·일기 ===== -->
+<section class="panel" id="writing">
+  <div class="card">
+    <span class="section-label">새 글쓰기 첨삭</span>
+    <div class="card-title">독서록·일기 첨삭</div>
+    <div class="card-subtitle">아이가 손글씨로 쓴 글을 사진으로 업로드하면 AI가 텍스트를 추출하고 첨삭 코멘트를 제안합니다.</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="form-group">
+          <label>학생 선택</label>
+          <select id="writeStudent"><option value="">— 학생을 선택하세요 —</option></select>
+        </div>
+        <div class="form-group">
+          <label>글 종류</label>
+          <div class="toggle-group">
+            <button class="active" data-type="diary" onclick="setWriteType(this,'diary')">일기</button>
+            <button data-type="book" onclick="setWriteType(this,'book')">독서록</button>
+            <button data-type="textbook" onclick="setWriteType(this,'textbook')">교과서 쓰기</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>주제 / 책 제목</label>
+          <input type="text" id="writeTopic" placeholder="예: 어제 있었던 일 / 강아지똥">
+        </div>
+        <div class="form-group">
+          <label>제출일</label>
+          <input type="text" id="writeDate" placeholder="자동입력됨">
+        </div>
+      </div>
+
+      <div>
+        <label>학생 글 사진 업로드</label>
+        <div class="upload-area" onclick="document.getElementById('writePhoto').click()">
+          <input type="file" id="writePhoto" accept="image/*" onchange="handlePhotoUpload(event, 'write')">
+          <div id="writeUploadDisplay">
+            <div class="upload-icon">+</div>
+            <div class="upload-text">사진을 선택하거나 끌어다 놓으세요</div>
+            <div class="upload-hint">한 장 또는 여러 장 가능 · 가로/세로 모두 OK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top: 20px;">
+      <label>학생 글 (사진에서 자동 추출되거나 직접 입력 가능)</label>
+      <textarea id="writeText" rows="6" placeholder="사진을 업로드하면 AI가 손글씨를 인식해 여기에 자동 입력합니다. 인식 결과는 자유롭게 수정할 수 있습니다."></textarea>
+    </div>
+
+    <div>
+      <button onclick="simulateAIWriting()">AI 손글씨 인식 + 첨삭 실행</button>
+      <button class="secondary" onclick="manualWritingAnalyze()" style="margin-left:8px;">직접 입력 후 첨삭만 실행</button>
+    </div>
+
+    <div id="writeAnalysis" style="display:none; margin-top: 24px;">
+      <div class="grid-4" style="margin-bottom: 16px;">
+        <div class="stat">
+          <div class="stat-label">전체 글자 수</div>
+          <div class="stat-value" id="writeCharCount">—<span class="stat-unit">자</span></div>
+        </div>
+        <div class="stat green">
+          <div class="stat-label">문장 수</div>
+          <div class="stat-value" id="writeSentCount">—<span class="stat-unit">개</span></div>
+        </div>
+        <div class="stat gold">
+          <div class="stat-label">맞춤법 오류 추정</div>
+          <div class="stat-value" id="writeErrCount">—<span class="stat-unit">건</span></div>
+        </div>
+        <div class="stat blue">
+          <div class="stat-label">쓰기 단계</div>
+          <div class="stat-value" id="writeLevel" style="font-size:20px; line-height:1.3;">—</div>
+        </div>
+      </div>
+
+      <div class="ai-box">
+        <div class="ai-box-title">▲ AI 첨삭 코멘트 (교사용 참고)</div>
+        <div class="ai-box-content" id="writeAIComment"></div>
+      </div>
+
+      <div class="ai-box" style="background: linear-gradient(135deg, #f0f5e8 0%, #e8efd9 100%); border-color: var(--green); border-left-color: var(--green);">
+        <div class="ai-box-title" style="color: var(--green);">♥ 학생용 격려 메시지</div>
+        <div class="ai-box-content" id="writeStudentComment"></div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button onclick="saveWriting()">첨삭 결과 저장</button>
+        <button class="secondary" onclick="resetWriting()" style="margin-left:8px;">새로 작성</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">제출 기록</span>
+    <div class="card-title">최근 글쓰기 제출</div>
+    <table>
+      <thead>
+        <tr><th>날짜</th><th>학생</th><th>종류</th><th>주제</th><th>글자수</th><th>단계</th><th>관리</th></tr>
+      </thead>
+      <tbody id="writeHistory"></tbody>
+    </table>
+    <div id="writeEmptyMsg" class="empty">
+      <div class="empty-icon">文</div>
+      <div class="empty-text">아직 제출된 글이 없습니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 05. 국어 위계 ===== -->
+<section class="panel" id="ladder">
+  <div class="card">
+    <span class="section-label">2022 개정 교육과정 기반</span>
+    <div class="card-title">초등 저학년 한글·맞춤법 학습 위계</div>
+    <div class="card-subtitle">받아쓰기 오류 유형은 이 위계에 따라 자동 분류되며, 학생의 현재 단계를 진단합니다.</div>
+
+    <div class="ladder" style="margin-top: 20px;">
+      <div class="ladder-step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-name">소리와 글자의 대응</div>
+          <span class="step-example">자음·모음 인식, 받침 없는 글자 — 예: 바다, 나무, 아기</span>
+        </div>
+        <div class="step-progress">기초</div>
+      </div>
+      <div class="ladder-step active">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-name">받침 있는 글자 (홑·쌍·겹받침)</div>
+          <span class="step-example">홑받침 → 쌍받침(ㄲ,ㅆ) → 겹받침(ㄺ,ㄼ) — 예: 학교, 책, 닭, 밟다</span>
+        </div>
+        <div class="step-progress">2학년 핵심</div>
+      </div>
+      <div class="ladder-step active">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-name">소리와 표기가 다른 낱말</div>
+          <span class="step-example">연음·된소리되기·자음동화·구개음화 — 예: 꽃이[꼬치], 같이[가치], 국물[궁물]</span>
+        </div>
+        <div class="step-progress">2학년 도전</div>
+      </div>
+      <div class="ladder-step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-name">문법적 맞춤법</div>
+          <span class="step-example">띄어쓰기, 문장부호, 조사(은/는/이/가), 어미 변화</span>
+        </div>
+        <div class="step-progress">3학년~</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">자동 분류 기준</span>
+    <div class="card-title">받아쓰기 오류 유형 분류표</div>
+    <div class="card-subtitle">AI가 학생 답안과 정답을 비교해 다음 유형 중 하나로 자동 분류합니다.</div>
+    <table style="margin-top: 16px;">
+      <thead>
+        <tr><th>오류 유형</th><th>예시 (정답 → 오답)</th><th>해당 단계</th><th>지도 방법</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="tag">받침 누락</span></td><td>학교 → 하교</td><td>2단계</td><td>받침 인식 강화, 음절 분리 활동</td></tr>
+        <tr><td><span class="tag">받침 혼동</span></td><td>밖 → 박</td><td>2단계</td><td>유사 받침 비교 카드</td></tr>
+        <tr><td><span class="tag gold">겹받침 오류</span></td><td>닭 → 닥, 흙 → 흑</td><td>2단계</td><td>겹받침 단어 모음집 반복</td></tr>
+        <tr><td><span class="tag red">연음 오류</span></td><td>꽃이 → 꼬치</td><td>3단계</td><td>"소리는 같아도 쓰기는 달라요" 비교 학습</td></tr>
+        <tr><td><span class="tag red">된소리 오류</span></td><td>학교 → 학꾜, 갑자기 → 갑짜기</td><td>3단계</td><td>발음과 표기 분리 인식</td></tr>
+        <tr><td><span class="tag red">구개음화</span></td><td>같이 → 가치</td><td>3단계</td><td>형태소 인식 지도</td></tr>
+        <tr><td><span class="tag blue">띄어쓰기</span></td><td>학교에간다 → 학교에 간다</td><td>4단계</td><td>문장 단위 분석</td></tr>
+        <tr><td><span class="tag">기타</span></td><td>모음 혼동, 자음 혼동 등</td><td>1~2단계</td><td>발음·시각 변별 활동</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 06. 설정 ===== -->
+<section class="panel" id="settings">
+  <div class="card">
+    <span class="section-label">데이터 연동</span>
+    <div class="card-title">구글 시트 연결</div>
+    <div class="card-subtitle">평가 결과를 자동으로 구글 시트에 누적합니다. Google Apps Script Web App URL을 입력하세요.</div>
+
+    <div class="form-group">
+      <label>Apps Script Web App URL</label>
+      <input type="text" id="sheetURL" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <div class="form-group">
+      <label>스프레드시트 이름</label>
+      <input type="text" id="sheetName" value="2학년_국어진단_2026">
+    </div>
+    <button onclick="saveSheetSettings()">설정 저장</button>
+    <button class="secondary" onclick="testSheetConnection()" style="margin-left:8px;">연결 테스트</button>
+
+    <div class="notice" style="margin-top: 20px;">
+      <span class="notice-icon">i</span>
+      <div>
+        <strong>연동 안내:</strong> 구글 시트에서 [확장 프로그램] → [Apps Script]를 열고 doPost(e) 함수로 데이터를 받도록 설정하세요. 받아쓰기·글쓰기 결과가 별도 시트에 자동 누적됩니다. 이전에 만드신 Gemini API 칼로리 계산 코드와 같은 방식입니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">AI 모델 설정</span>
+    <div class="card-title">손글씨 인식 · 첨삭 AI</div>
+
+    <div class="form-group">
+      <label>AI 제공자</label>
+      <select id="aiProvider">
+        <option value="demo">데모 모드 (가짜 데이터)</option>
+        <option value="claude">Claude API (Anthropic)</option>
+        <option value="gemini">Google Gemini</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>API 키</label>
+      <input type="text" id="apiKey" placeholder="sk-ant-... 또는 AIza...">
+    </div>
+    <button onclick="saveAISettings()">AI 설정 저장</button>
+
+    <div class="notice" style="margin-top: 20px; background: #f0e8de;">
+      <span class="notice-icon">!</span>
+      <div>
+        <strong>현재 데모 모드</strong>입니다. 실제 손글씨 인식과 AI 첨삭은 API 키 입력 후 작동합니다. 데모 모드에서도 모든 기능을 시연할 수 있어 연구대회 발표에 사용 가능합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="section-label">데이터 관리</span>
+    <div class="card-title">백업 및 초기화</div>
+    <button onclick="exportData()">전체 데이터 JSON 내보내기</button>
+    <button class="secondary" onclick="loadDemoData()" style="margin-left:8px;">예시 데이터 불러오기</button>
+    <button class="danger" onclick="if(confirm('정말 모든 데이터를 삭제하시겠습니까?'))resetAll()" style="margin-left:8px;">전체 초기화</button>
+  </div>
+</section>
+
+<div class="footer">
+  <div class="footer-quote">"아이의 글씨에는 오늘의 마음이 담겨 있다."</div>
+  <div>한글샘 — 초등 2학년 국어 학습 진단 시스템 · 2026 디지털 연구대회 · 안산 · 경기</div>
+</div>
+
+</div>
+
+<script>
+/* ============== 데이터 저장소 ============== */
+let state = {
+  students: [],
+  dictations: [],
+  writings: [],
+  settings: { sheetURL: '', sheetName: '2학년_국어진단_2026', aiProvider: 'demo', apiKey: '' },
+  current: { dict: { photo: null, aiResult: null, words: [] }, write: { photo: null, type: 'diary' } }
+};
+
+async function saveState() {
+  try {
+    await window.storage.set('hangulsam_state', JSON.stringify(state));
+  } catch(e) { console.warn('Storage save failed', e); }
+}
+async function loadState() {
+  try {
+    const r = await window.storage.get('hangulsam_state');
+    if (r && r.value) state = JSON.parse(r.value);
+  } catch(e) { /* first run */ }
+}
+
+/* ============== 날짜 ============== */
+function todayKR() {
+  const d = new Date();
+  return `${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.`;
+}
+function todayShort() {
+  const d = new Date();
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+document.getElementById('todayDate').textContent = todayKR();
+
+/* ============== 탭 ============== */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.panel).classList.add('active');
+    if (t.dataset.panel === 'dashboard') renderDashboard();
+  });
+});
+
+/* ============== 학생 관리 ============== */
+function addStudent() {
+  const grade = document.getElementById('newGrade').value;
+  const cls = document.getElementById('newClass').value;
+  const num = document.getElementById('newNumber').value;
+  const name = document.getElementById('newName').value.trim();
+  if (!num || !name) { alert('번호와 이름을 모두 입력하세요.'); return; }
+  const id = `${grade}-${cls}-${num}`;
+  if (state.students.find(s => s.id === id)) { alert('이미 등록된 번호입니다.'); return; }
+  state.students.push({ id, grade, cls, num: parseInt(num), name, registered: todayKR() });
+  state.students.sort((a,b) => a.num - b.num);
+  document.getElementById('newNumber').value = '';
+  document.getElementById('newName').value = '';
+  renderStudents(); renderStudentSelects(); saveState();
+}
+
+function removeStudent(id) {
+  if (!confirm('학생을 목록에서 삭제하시겠습니까? (평가 기록은 유지됩니다)')) return;
+  state.students = state.students.filter(s => s.id !== id);
+  renderStudents(); renderStudentSelects(); saveState();
+}
+
+function renderStudents() {
+  const div = document.getElementById('studentList');
+  if (state.students.length === 0) {
+    div.innerHTML = `<div class="empty"><div class="empty-icon">人</div><div class="empty-text">등록된 학생이 없습니다.</div><div class="upload-hint">위에서 첫 학생을 추가해보세요.</div></div>`;
+    return;
+  }
+  div.innerHTML = state.students.map(s => {
+    const dictCount = state.dictations.filter(d => d.studentId === s.id).length;
+    const writeCount = state.writings.filter(w => w.studentId === s.id).length;
+    return `<div class="student-row">
+      <div>
+        <div class="student-name">${s.num}번 ${s.name}</div>
+        <div class="student-meta">${s.grade}학년 ${s.cls}반 · 등록일 ${s.registered}</div>
+      </div>
+      <div class="tag">받아쓰기 ${dictCount}회</div>
+      <div class="tag green">글쓰기 ${writeCount}편</div>
+      <button class="small secondary" onclick="removeStudent('${s.id}')">삭제</button>
+    </div>`;
+  }).join('');
+}
+
+function renderStudentSelects() {
+  ['dictStudent','writeStudent'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— 학생을 선택하세요 —</option>' +
+      state.students.map(s => `<option value="${s.id}">${s.num}번 ${s.name}</option>`).join('');
+    if (cur) sel.value = cur;
+  });
+}
+
+/* ============== 사진 업로드 ============== */
+function handlePhotoUpload(event, type) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    state.current[type].photo = url;
+    const display = document.getElementById(type + 'UploadDisplay');
+    display.innerHTML = `<img src="${url}" class="upload-preview" alt="업로드된 사진"><div style="margin-top:10px;font-size:12px;color:var(--ink-soft);">${file.name} · ${(file.size/1024).toFixed(0)}KB</div>`;
+    display.parentElement.classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============== 받아쓰기 ============== */
+function generateDictRows() {
+  const ans = document.getElementById('dictAnswers').value.split(',').map(w => w.trim()).filter(Boolean);
+  if (ans.length === 0) { alert('정답 단어를 먼저 입력하세요.'); return; }
+  const area = document.getElementById('dictWordsArea');
+  area.innerHTML = '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;">단어별로 학생이 쓴 답을 입력하세요. AI 인식 결과를 사용하면 자동 채워집니다.</div>' +
+    ans.map((w, i) => `
+      <div class="word-entry">
+        <div class="word-num">${i+1}</div>
+        <div class="word-correct">정답: <strong>${w}</strong></div>
+        <div class="word-student"><input type="text" id="studAns${i}" placeholder="학생이 쓴 답"></div>
+        <div id="judge${i}" style="font-family:'Nanum Myeongjo',serif;font-size:14px;color:var(--ink-soft);">—</div>
+        <button class="small secondary" onclick="judgeOne(${i}, '${w}')">채점</button>
+      </div>
+    `).join('') +
+    `<div style="margin-top:16px;"><button onclick="judgeAll()">전체 채점하기</button></div>`;
+  state.current.dict.words = ans;
+}
+
+function classifyError(correct, student) {
+  if (correct === student) return null;
+  if (!student) return '미응답';
+
+  const corrChars = [...correct], studChars = [...student];
+
+  // 길이가 다르면 받침 누락 가능성 우선 검사
+  if (corrChars.length === studChars.length) {
+    // 같은 길이에서 다른 음절들 분석
+    for (let i = 0; i < corrChars.length; i++) {
+      if (corrChars[i] === studChars[i]) continue;
+      const cCode = corrChars[i].charCodeAt(0) - 0xAC00;
+      const sCode = studChars[i].charCodeAt(0) - 0xAC00;
+      if (cCode < 0 || sCode < 0) continue;
+      const cFinal = cCode % 28;
+      const sFinal = sCode % 28;
+      const cInitial = Math.floor(cCode / 588);
+      const sInitial = Math.floor(sCode / 588);
+      const cMedial = Math.floor((cCode % 588) / 28);
+      const sMedial = Math.floor((sCode % 588) / 28);
+
+      // 겹받침 (위치 8~18 중 일부) 오류
+      const doubleFinals = [9,10,11,12,13,14,15,18,20];
+      if (doubleFinals.includes(cFinal) && cFinal !== sFinal) return '겹받침 오류';
+
+      // 받침 혼동
+      if (cFinal !== 0 && sFinal !== 0 && cFinal !== sFinal && cInitial === sInitial && cMedial === sMedial) return '받침 혼동';
+
+      // 된소리 (ㄲㄸㅃㅆㅉ)
+      const tense = [1,4,8,10,13];
+      if (tense.includes(sInitial) && !tense.includes(cInitial)) return '된소리 오류';
+
+      // 모음 혼동
+      if (cInitial === sInitial && cMedial !== sMedial) return '모음 혼동';
+    }
+    return '자모 혼동';
+  }
+
+  // 길이가 짧아진 경우: 받침 누락 또는 연음 오류
+  if (studChars.length < corrChars.length) return '받침 누락';
+
+  // 길이가 길어진 경우: 띄어쓰기/연음 오류
+  return '연음 오류';
+}
+
+function judgeOne(i, correct) {
+  const stud = document.getElementById(`studAns${i}`).value.trim();
+  const cell = document.getElementById(`judge${i}`);
+  if (stud === correct) {
+    cell.innerHTML = '<span style="color:var(--green);">○ 정답</span>';
+  } else {
+    const err = classifyError(correct, stud) || '오답';
+    cell.innerHTML = `<span style="color:var(--accent);">× ${err}</span>`;
+  }
+}
+
+function judgeAll() {
+  let correct = 0, errors = {};
+  state.current.dict.words.forEach((w, i) => {
+    judgeOne(i, w);
+    const stud = document.getElementById(`studAns${i}`).value.trim();
+    if (stud === w) correct++;
+    else {
+      const e = classifyError(w, stud) || '오답';
+      errors[e] = (errors[e] || 0) + 1;
+    }
+  });
+  const total = state.current.dict.words.length;
+  const rate = Math.round(correct / total * 100);
+  document.getElementById('dictScore').textContent = `${correct}/${total}`;
+  document.getElementById('dictRate').textContent = rate;
+  const mainErr = Object.entries(errors).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('dictMainError').textContent = mainErr ? `${mainErr[0]} (${mainErr[1]}건)` : '없음';
+  document.getElementById('dictSubmitArea').style.display = 'block';
+  state.current.dict.judgement = { correct, total, rate, errors };
+}
+
+function simulateAIDict() {
+  if (!state.current.dict.photo) { alert('먼저 학생 답안 사진을 업로드해주세요.'); return; }
+  const ans = document.getElementById('dictAnswers').value.split(',').map(w => w.trim()).filter(Boolean);
+  if (ans.length === 0) { alert('정답 단어를 먼저 입력하세요.'); return; }
+
+  // 데모: 정답에서 일부러 받침/연음/된소리 오류를 섞어서 인식 결과 생성
+  const fakeRecognized = ans.map(w => {
+    const r = Math.random();
+    if (r < 0.6) return w; // 정답
+    // 일부러 오류 만들기 (데모)
+    if (w.includes('꽃')) return w.replace('꽃이','꼬치').replace('꽃','꼿');
+    if (w.includes('같이')) return '가치';
+    if (w.includes('학교')) return '학꾜';
+    if (w.includes('국물')) return '궁물';
+    if (w.length > 1) return w.slice(0, -1) + (w.slice(-1) === '교' ? '구' : w.slice(-1)); 
+    return w;
+  });
+
+  document.getElementById('dictAIBox').style.display = 'block';
+  document.getElementById('dictAIResult').innerHTML = fakeRecognized.map((r, i) =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line-soft);"><span>정답: <strong>${ans[i]}</strong></span><span>인식: <strong style="color:${r===ans[i]?'var(--green)':'var(--accent)'};">${r}</strong></span></div>`
+  ).join('') + '<div style="margin-top:10px;font-size:12px;color:var(--ink-soft);">※ 데모 모드: 실제 API 연결 시 Claude Vision 또는 Gemini Vision이 손글씨를 자동 인식합니다.</div>';
+  state.current.dict.aiResult = fakeRecognized;
+  state.current.dict.words = ans;
+}
+
+function acceptAIDictation() {
+  if (!state.current.dict.aiResult) return;
+  generateDictRows();
+  state.current.dict.aiResult.forEach((r, i) => {
+    const inp = document.getElementById(`studAns${i}`);
+    if (inp) inp.value = r;
+  });
+  judgeAll();
+}
+
+function reAnalyze(type) { simulateAIDict(); }
+
+function saveDictation() {
+  const sId = document.getElementById('dictStudent').value;
+  if (!sId) { alert('학생을 선택하세요.'); return; }
+  if (!state.current.dict.judgement) { alert('먼저 채점을 완료하세요.'); return; }
+  const stud = state.students.find(s => s.id === sId);
+  const round = document.getElementById('dictRound').value;
+  const date = document.getElementById('dictDate').value || todayKR();
+  const j = state.current.dict.judgement;
+  const studAnswers = state.current.dict.words.map((_, i) => document.getElementById(`studAns${i}`).value.trim());
+
+  state.dictations.push({
+    id: Date.now(), studentId: sId, studentName: stud.name,
+    round, date, dateShort: todayShort(),
+    words: state.current.dict.words, studAnswers,
+    correct: j.correct, total: j.total, rate: j.rate, errors: j.errors,
+    mainError: Object.entries(j.errors).sort((a,b) => b[1]-a[1])[0]?.[0] || '없음'
+  });
+  saveState();
+  // 시트 전송 시뮬레이션
+  if (state.settings.sheetURL) sendToSheet('dictation', state.dictations[state.dictations.length-1]);
+  alert('받아쓰기 결과가 저장되었습니다.\n' + (state.settings.sheetURL ? '구글 시트로 전송 완료.' : '구글 시트 URL을 [설정]에서 입력하면 자동 전송됩니다.'));
+  resetDictation();
+  renderDictHistory();
+  renderStudents();
+}
+
+function resetDictation() {
+  state.current.dict = { photo: null, aiResult: null, words: [] };
+  document.getElementById('dictAnswers').value = '';
+  document.getElementById('dictWordsArea').innerHTML = '';
+  document.getElementById('dictSubmitArea').style.display = 'none';
+  document.getElementById('dictAIBox').style.display = 'none';
+  document.getElementById('dictUploadDisplay').innerHTML = `<div class="upload-icon">+</div><div class="upload-text">사진을 선택하거나 끌어다 놓으세요</div><div class="upload-hint">JPG, PNG · 최대 10MB</div>`;
+}
+
+function renderDictHistory() {
+  const tbody = document.getElementById('dictHistory');
+  const empty = document.getElementById('dictEmptyMsg');
+  if (state.dictations.length === 0) {
+    tbody.innerHTML = ''; empty.style.display = 'block';
+    document.getElementById('dictHistoryTable').style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  document.getElementById('dictHistoryTable').style.display = 'table';
+  tbody.innerHTML = state.dictations.slice().reverse().slice(0, 20).map(d => {
+    const tagClass = d.rate >= 80 ? 'green' : d.rate >= 60 ? 'gold' : 'red';
+    return `<tr>
+      <td>${d.date}</td>
+      <td><strong>${d.studentName}</strong></td>
+      <td>${d.round}회</td>
+      <td>${d.correct}/${d.total}</td>
+      <td><span class="tag ${tagClass}">${d.rate}%</span></td>
+      <td>${d.mainError}</td>
+      <td><button class="small secondary" onclick="if(confirm('삭제?')){state.dictations=state.dictations.filter(x=>x.id!==${d.id});saveState();renderDictHistory();renderDashboard();renderStudents();}">삭제</button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============== 글쓰기 첨삭 ============== */
+function setWriteType(btn, type) {
+  document.querySelectorAll('.toggle-group button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.current.write.type = type;
+}
+
+function simulateAIWriting() {
+  if (!state.current.write.photo) {
+    if (!confirm('사진 없이 직접 입력으로 진행하시겠습니까?')) return;
+  } else {
+    // 데모: 가짜로 손글씨 인식 결과 생성
+    const samples = [
+      '오늘 학교에서 친구들이랑 놀이터에서 노랐다. 미끄럼틀을 다섯번이나 탔다. 정말 재미있었다.',
+      '엄마가 떡볶이를 만드러 주셨다. 매웠지만 마시썼다. 다음에도 또 먹고 시따.',
+      '어제 강아지똥 책을 읽었다. 강아지똥은 처음에 슬펐다. 하지만 민들레꼬츨 피게 해서 좋았다. 나도 누군가에게 도움이 되고시따.'
+    ];
+    const sample = samples[Math.floor(Math.random() * samples.length)];
+    document.getElementById('writeText').value = sample;
+  }
+
+  setTimeout(analyzeWriting, 500);
+}
+
+function manualWritingAnalyze() {
+  if (!document.getElementById('writeText').value.trim()) {
+    alert('학생 글을 입력해주세요.'); return;
+  }
+  analyzeWriting();
+}
+
+function analyzeWriting() {
+  const text = document.getElementById('writeText').value.trim();
+  if (!text) return;
+
+  const charCount = text.replace(/\s/g, '').length;
+  const sentences = text.split(/[.!?。]/).filter(s => s.trim().length > 0);
+  const sentCount = sentences.length;
+
+  // 간단한 맞춤법 오류 추정 (데모용 패턴)
+  const commonErrors = [
+    /노랐/g, /마시/g, /시따/g, /시퍼/g, /이써/g, /업써/g, /해써/g,
+    /가치/g, /꼬치/g, /궁물/g, /가/g, /므러/g, /바다써/g
+  ];
+  let errCount = 0;
+  commonErrors.forEach(re => { const m = text.match(re); if (m) errCount += m.length; });
+
+  // 쓰기 단계 판정
+  let level = '', levelDesc = '';
+  if (sentCount <= 1) { level = '1단계'; levelDesc = '한 문장 쓰기'; }
+  else if (sentCount <= 3) { level = '2단계'; levelDesc = '여러 문장 쓰기'; }
+  else if (charCount < 100) { level = '3단계'; levelDesc = '짧은 문단 쓰기'; }
+  else { level = '4단계'; levelDesc = '문단 글쓰기'; }
+
+  document.getElementById('writeCharCount').innerHTML = charCount + '<span class="stat-unit">자</span>';
+  document.getElementById('writeSentCount').innerHTML = sentCount + '<span class="stat-unit">개</span>';
+  document.getElementById('writeErrCount').innerHTML = errCount + '<span class="stat-unit">건</span>';
+  document.getElementById('writeLevel').innerHTML = `${level}<br><span style="font-size:12px;color:var(--ink-soft);font-weight:400;">${levelDesc}</span>`;
+
+  // AI 첨삭 코멘트 (데모)
+  const teacherComments = [];
+  if (errCount > 0) teacherComments.push(`<strong>맞춤법 지도 포인트:</strong> 약 ${errCount}건의 오류가 발견되었습니다. 주로 받침 처리와 소리나는 대로 쓰는 경향(연음 오류)이 보입니다. 2학년 위계 3단계(연음·된소리) 집중 지도가 필요합니다.`);
+  if (sentCount < 3) teacherComments.push(`<strong>분량 발달:</strong> 문장 수가 ${sentCount}개로 짧습니다. "그래서", "왜냐하면" 같은 연결어를 사용해 문장을 늘려보도록 유도하면 좋겠습니다.`);
+  else teacherComments.push(`<strong>분량 발달:</strong> ${sentCount}개의 문장으로 적절한 분량을 갖추었습니다. 이제 문단 구성(처음-가운데-끝)을 의식하도록 지도해보세요.`);
+  teacherComments.push(`<strong>다음 단계 제안:</strong> 같은 주제로 한 번 더 쓰되, 오늘 발견한 맞춤법 단어를 따로 받아쓰기로 점검하면 효과적입니다.`);
+
+  document.getElementById('writeAIComment').innerHTML = teacherComments.join('<br><br>');
+
+  const studentMsgs = [
+    `오늘도 글을 써줘서 정말 고마워요. ${charCount}자나 썼네요! 이야기가 재미있어서 선생님도 함께 그 장면이 떠올랐어요. 다음에는 그때 어떤 기분이었는지 한 줄만 더 써볼까요?`,
+    `생각을 글로 옮기는 일은 어려운 일인데, ${sentCount}개의 문장으로 잘 표현했어요. 글씨도 정성껏 썼다는 게 보여요. 잘했어요!`,
+    `읽으면서 마음이 따뜻해졌어요. 글에 진심이 담겨 있어요. 내일도 오늘처럼 한 줄이라도 더 써봐요.`
+  ];
+  document.getElementById('writeStudentComment').innerHTML = studentMsgs[Math.floor(Math.random() * studentMsgs.length)];
+
+  state.current.write.analysis = { charCount, sentCount, errCount, level, levelDesc, text };
+  document.getElementById('writeAnalysis').style.display = 'block';
+}
+
+function saveWriting() {
+  const sId = document.getElementById('writeStudent').value;
+  if (!sId) { alert('학생을 선택하세요.'); return; }
+  if (!state.current.write.analysis) { alert('먼저 첨삭을 실행하세요.'); return; }
+  const stud = state.students.find(s => s.id === sId);
+  const a = state.current.write.analysis;
+  const typeMap = { diary: '일기', book: '독서록', textbook: '교과서 쓰기' };
+
+  state.writings.push({
+    id: Date.now(), studentId: sId, studentName: stud.name,
+    type: state.current.write.type, typeName: typeMap[state.current.write.type],
+    topic: document.getElementById('writeTopic').value || '(주제 없음)',
+    date: document.getElementById('writeDate').value || todayKR(),
+    text: a.text, charCount: a.charCount, sentCount: a.sentCount,
+    errCount: a.errCount, level: a.level
+  });
+  saveState();
+  if (state.settings.sheetURL) sendToSheet('writing', state.writings[state.writings.length-1]);
+  alert('글쓰기 첨삭 결과가 저장되었습니다.');
+  resetWriting();
+  renderWriteHistory();
+  renderStudents();
+}
+
+function resetWriting() {
+  state.current.write = { photo: null, type: state.current.write.type };
+  document.getElementById('writeText').value = '';
+  document.getElementById('writeTopic').value = '';
+  document.getElementById('writeAnalysis').style.display = 'none';
+  document.getElementById('writeUploadDisplay').innerHTML = `<div class="upload-icon">+</div><div class="upload-text">사진을 선택하거나 끌어다 놓으세요</div><div class="upload-hint">한 장 또는 여러 장 가능</div>`;
+}
+
+function renderWriteHistory() {
+  const tbody = document.getElementById('writeHistory');
+  const empty = document.getElementById('writeEmptyMsg');
+  if (state.writings.length === 0) {
+    tbody.innerHTML = ''; empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = state.writings.slice().reverse().slice(0, 20).map(w => `<tr>
+    <td>${w.date}</td>
+    <td><strong>${w.studentName}</strong></td>
+    <td><span class="tag">${w.typeName}</span></td>
+    <td>${w.topic}</td>
+    <td>${w.charCount}자</td>
+    <td><span class="tag blue">${w.level}</span></td>
+    <td><button class="small secondary" onclick="if(confirm('삭제?')){state.writings=state.writings.filter(x=>x.id!==${w.id});saveState();renderWriteHistory();renderDashboard();renderStudents();}">삭제</button></td>
+  </tr>`).join('');
+}
+
+/* ============== 대시보드 ============== */
+let trendChart = null, errorChart = null;
+
+function renderDashboard() {
+  document.getElementById('dashStudentCount').innerHTML = state.students.length + '<span class="stat-unit">명</span>';
+  document.getElementById('dashWritingCount').innerHTML = state.writings.length + '<span class="stat-unit">편</span>';
+  const aiCount = state.dictations.filter(d => d.aiUsed).length + state.writings.length;
+  document.getElementById('dashAICount').innerHTML = aiCount + '<span class="stat-unit">회</span>';
+
+  if (state.dictations.length > 0) {
+    const recent = state.dictations.slice(-5);
+    const avg = Math.round(recent.reduce((s,d) => s+d.rate, 0) / recent.length);
+    document.getElementById('dashDictationAvg').innerHTML = avg + '<span class="stat-unit">점</span>';
+  } else {
+    document.getElementById('dashDictationAvg').innerHTML = '—<span class="stat-unit">점</span>';
+  }
+
+  drawTrendChart();
+  drawErrorChart();
+  renderStudentSummary();
+}
+
+function drawTrendChart() {
+  const ctx = document.getElementById('trendChart');
+  if (trendChart) trendChart.destroy();
+
+  // 학급 평균을 회차별로 집계
+  const rounds = {};
+  state.dictations.forEach(d => {
+    const k = `${d.round}회`;
+    if (!rounds[k]) rounds[k] = [];
+    rounds[k].push(d.rate);
+  });
+  const labels = Object.keys(rounds).sort((a,b) => parseInt(a) - parseInt(b));
+  const data = labels.map(k => Math.round(rounds[k].reduce((s,n)=>s+n,0) / rounds[k].length));
+
+  if (labels.length === 0) {
+    // 데모 데이터
+    const demoLabels = ['1회','2회','3회','4회','5회'];
+    const demoData = [62, 68, 71, 78, 82];
+    trendChart = new Chart(ctx, makeLineChartConfig(demoLabels, demoData, true));
+  } else {
+    trendChart = new Chart(ctx, makeLineChartConfig(labels, data, false));
+  }
+}
+
+function makeLineChartConfig(labels, data, isDemo) {
+  return {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '학급 평균 정답률(%)',
+        data,
+        borderColor: '#c8553d',
+        backgroundColor: 'rgba(200,85,61,0.1)',
+        borderWidth: 2.5,
+        tension: 0.3,
+        fill: true,
+        pointBackgroundColor: '#c8553d',
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: { display: isDemo, text: '※ 데모 데이터 (실제 평가 기록이 쌓이면 자동 갱신)', font: { size: 11 }, color: '#8a8478' }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
+      }
+    }
+  };
+}
+
+function drawErrorChart() {
+  const ctx = document.getElementById('errorChart');
+  if (errorChart) errorChart.destroy();
+
+  const errors = {};
+  state.dictations.forEach(d => {
+    Object.entries(d.errors || {}).forEach(([k,v]) => { errors[k] = (errors[k] || 0) + v; });
+  });
+
+  let labels, data, isDemo = false;
+  if (Object.keys(errors).length === 0) {
+    labels = ['받침 누락','연음 오류','된소리 오류','겹받침 오류','띄어쓰기'];
+    data = [12, 9, 7, 5, 3];
+    isDemo = true;
+  } else {
+    const sorted = Object.entries(errors).sort((a,b) => b[1] - a[1]);
+    labels = sorted.map(s => s[0]);
+    data = sorted.map(s => s[1]);
+  }
+
+  errorChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: ['#c8553d','#e08775','#b8924a','#5a7a4a','#4a6b8a','#8a8478'],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        title: { display: isDemo, text: '※ 데모 데이터', font: { size: 11 }, color: '#8a8478' }
+      },
+      scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+function renderStudentSummary() {
+  const div = document.getElementById('studentSummary');
+  if (state.students.length === 0) {
+    div.innerHTML = `<div class="empty"><div class="empty-icon">學</div><div class="empty-text">아직 등록된 학생이 없습니다.</div><div class="upload-hint">[학생 관리] 탭에서 학생을 먼저 추가하세요.</div></div>`;
+    return;
+  }
+  div.innerHTML = '<table><thead><tr><th>번호·이름</th><th>최근 받아쓰기</th><th>평균 정답률</th><th>주요 취약 유형</th><th>현재 단계</th><th>글쓰기</th></tr></thead><tbody>' +
+    state.students.map(s => {
+      const dicts = state.dictations.filter(d => d.studentId === s.id);
+      const writes = state.writings.filter(w => w.studentId === s.id);
+      let recent = '—', avg = '—', mainErr = '—', level = '진단 전';
+      if (dicts.length > 0) {
+        const last = dicts[dicts.length-1];
+        recent = `${last.correct}/${last.total} (${last.dateShort})`;
+        avg = Math.round(dicts.reduce((s,d) => s+d.rate, 0) / dicts.length) + '%';
+
+        const allErr = {};
+        dicts.forEach(d => Object.entries(d.errors||{}).forEach(([k,v]) => { allErr[k] = (allErr[k]||0)+v; }));
+        const sortedErr = Object.entries(allErr).sort((a,b)=>b[1]-a[1]);
+        if (sortedErr.length > 0) mainErr = sortedErr[0][0];
+
+        // 단계 추정
+        if (mainErr.includes('연음') || mainErr.includes('된소리') || mainErr.includes('구개')) level = '<span class="tag red">3단계 도전중</span>';
+        else if (mainErr.includes('겹받침') || mainErr.includes('받침')) level = '<span class="tag gold">2단계 강화중</span>';
+        else if (mainErr.includes('띄어쓰기')) level = '<span class="tag blue">4단계 진입</span>';
+        else level = '<span class="tag green">2단계 안정</span>';
+      }
+      return `<tr>
+        <td><strong>${s.num}번 ${s.name}</strong></td>
+        <td>${recent}</td>
+        <td>${avg}</td>
+        <td>${mainErr}</td>
+        <td>${level}</td>
+        <td>${writes.length}편</td>
+      </tr>`;
+    }).join('') + '</tbody></table>';
+}
+
+/* ============== 설정 ============== */
+function saveSheetSettings() {
+  state.settings.sheetURL = document.getElementById('sheetURL').value.trim();
+  state.settings.sheetName = document.getElementById('sheetName').value.trim();
+  saveState();
+  alert('구글 시트 설정이 저장되었습니다.');
+}
+
+function testSheetConnection() {
+  if (!state.settings.sheetURL) { alert('먼저 Apps Script URL을 입력하고 저장하세요.'); return; }
+  alert('연결 테스트 (데모): \n\nURL: ' + state.settings.sheetURL + '\n\n실제 환경에서는 Apps Script로 핑 요청을 보내 응답을 확인합니다.');
+}
+
+function saveAISettings() {
+  state.settings.aiProvider = document.getElementById('aiProvider').value;
+  state.settings.apiKey = document.getElementById('apiKey').value.trim();
+  saveState();
+  alert('AI 설정이 저장되었습니다.');
+}
+
+async function sendToSheet(type, data) {
+  // 실제로는 fetch(state.settings.sheetURL, { method: 'POST', body: JSON.stringify({type, data}) })
+  console.log('[Sheet 전송 시뮬레이션]', type, data);
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `한글샘_백업_${todayKR().replace(/[. ]/g,'')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadDemoData() {
+  if (state.students.length > 0) {
+    if (!confirm('기존 데이터에 예시 데이터를 추가하시겠습니까?')) return;
+  }
+  const demoStudents = [
+    {num:1, name:'김민준'}, {num:2, name:'이서연'}, {num:3, name:'박지호'},
+    {num:4, name:'최예린'}, {num:5, name:'정도현'}, {num:6, name:'강하은'}
+  ];
+  demoStudents.forEach(s => {
+    const id = `2-1-${s.num}`;
+    if (!state.students.find(x => x.id === id)) {
+      state.students.push({ id, grade:'2', cls:'1', num:s.num, name:s.name, registered: todayKR() });
+    }
+  });
+
+  // 받아쓰기 데모 데이터
+  const errorTypes = ['받침 누락','연음 오류','된소리 오류','겹받침 오류','받침 혼동'];
+  for (let r = 1; r <= 5; r++) {
+    state.students.forEach(s => {
+      const total = 10;
+      const correct = Math.min(total, Math.floor(6 + r * 0.8 + Math.random() * 3));
+      const errCount = total - correct;
+      const errors = {};
+      for (let i = 0; i < errCount; i++) {
+        const e = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+        errors[e] = (errors[e] || 0) + 1;
+      }
+      state.dictations.push({
+        id: Date.now() + Math.random(), studentId: s.id, studentName: s.name,
+        round: r, date: todayKR(), dateShort: todayShort(),
+        words: ['학교','꽃이','같이','책을','국물','닭','밖','앞','읽다','웃다'],
+        correct, total, rate: Math.round(correct/total*100),
+        errors, mainError: Object.entries(errors).sort((a,b)=>b[1]-a[1])[0]?.[0] || '없음'
+      });
+    });
+  }
+
+  // 글쓰기 데모
+  const sampleTexts = [
+    '오늘 학교에서 친구들이랑 놀았다. 정말 재미있었다.',
+    '엄마가 떡볶이를 해주셨다. 매웠지만 마시썼다.',
+    '강아지똥 책을 읽었다. 슬프지만 좋은 이야기였다. 나도 도움이 되는 사람이 되고싶다.'
+  ];
+  state.students.forEach(s => {
+    for (let i = 0; i < 2; i++) {
+      const text = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+      state.writings.push({
+        id: Date.now() + Math.random(),
+        studentId: s.id, studentName: s.name,
+        type: i === 0 ? 'diary' : 'book',
+        typeName: i === 0 ? '일기' : '독서록',
+        topic: i === 0 ? '오늘 있었던 일' : '강아지똥',
+        date: todayKR(), text,
+        charCount: text.replace(/\s/g,'').length,
+        sentCount: text.split(/[.!?]/).filter(x=>x.trim()).length,
+        errCount: Math.floor(Math.random() * 3),
+        level: '2단계'
+      });
+    }
+  });
+
+  saveState();
+  renderStudents(); renderStudentSelects();
+  renderDictHistory(); renderWriteHistory();
+  renderDashboard();
+  alert('예시 데이터가 추가되었습니다.\n학생 6명, 받아쓰기 30회, 글쓰기 12편이 생성되었습니다.\n\n[대시보드]에서 결과를 확인해보세요.');
+}
+
+function resetAll() {
+  state = {
+    students: [], dictations: [], writings: [],
+    settings: state.settings,
+    current: { dict: { photo: null, aiResult: null, words: [] }, write: { photo: null, type: 'diary' } }
+  };
+  saveState();
+  renderStudents(); renderStudentSelects();
+  renderDictHistory(); renderWriteHistory(); renderDashboard();
+  alert('모든 데이터가 초기화되었습니다.');
+}
+
+/* ============== 초기화 ============== */
+async function init() {
+  await loadState();
+  // 설정 UI에 반영
+  if (state.settings.sheetURL) document.getElementById('sheetURL').value = state.settings.sheetURL;
+  if (state.settings.sheetName) document.getElementById('sheetName').value = state.settings.sheetName;
+  if (state.settings.aiProvider) document.getElementById('aiProvider').value = state.settings.aiProvider;
+  if (state.settings.apiKey) document.getElementById('apiKey').value = state.settings.apiKey;
+
+  document.getElementById('dictDate').value = todayKR();
+  document.getElementById('writeDate').value = todayKR();
+
+  renderStudents();
+  renderStudentSelects();
+  renderDictHistory();
+  renderWriteHistory();
+  renderDashboard();
+}
+init();
+</script>
+</body>
+</html>
